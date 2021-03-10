@@ -7,6 +7,7 @@ data$Conference = as.factor(data$Conference)
 data$Year = as.factor(data$Year)
 
 print("Cameron was present")
+print("Rich's branch")
 
 # Explorartory Histograms
 ggplot(data, aes(x = Games, fill = Year)) + geom_histogram(binwidth = 1) + 
