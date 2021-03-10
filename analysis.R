@@ -87,7 +87,7 @@ ggplot(data, aes(x = AvgTurnoverMargin, fill = Conference)) + geom_histogram(bin
   ggtitle("Histogram of Average Turnover Margin")
 ggplot(data, aes(x = WinPct, fill = Conference)) + geom_histogram(binwidth = .1) +
   ggtitle("Histogram of Win %")
-ggplot(data, aes(x = Win...vs.Rank, fill = Conference)) + geom_histogram(binwidth = .15) +
+ggplot(data, aes(x = Win...vs.Rank, fill = Conference)) + geom_histogram(binwidth = .1) +
   ggtitle("Histogram of Win % vs. Ranked Opponents")
 ggplot(data, aes(x = Avg.Point.Differential, fill = Conference)) + geom_histogram(binwidth = 5) +
   ggtitle("Histogram of Average Point Differential")
