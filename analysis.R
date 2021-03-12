@@ -1,12 +1,11 @@
 #loading in libraries
 library(ggplot2)
+library(car)
 
 #loading in data
 data = read.csv("football.csv")
 data$Conference = as.factor(data$Conference)
 data$Year = as.factor(data$Year)
-
-print("Cameron was present")
 
 # Explorartory Histograms
 ggplot(data, aes(x = Games, fill = Year)) + geom_histogram(binwidth = 1) + 
@@ -87,5 +86,17 @@ ggplot(data, aes(x = WinPct, fill = Conference)) + geom_histogram(binwidth = .1)
   ggtitle("Histogram of Win %")
 ggplot(data, aes(x = Win...vs.Rank, fill = Conference)) + geom_histogram(binwidth = .15) +
   ggtitle("Histogram of Win % vs. Ranked Opponents")
-ggplot(data, aes(x = Avg.Point.Differential, fill = Conference)) + geom_histogram(binwidth = 5) +
+ggplot(data, aes(x = AvgPointDifferential, fill = Conference)) + geom_histogram(binwidth = 5) +
   ggtitle("Histogram of Average Point Differential")
+
+### Checking logit linear relationship - data issue?
+test_data<-data[,-c(1,3,20,40,42,44,45,46,47)]
+boxTidwell(Selected~.,data=test_data)
+
+glm.fit<-glm(Selected~.-Year-Team-Games,data=data,family='binomial')
+summary(glm.fit)
+
+##Checking for outliers
+cooks<-cooks.distance(glm.fit)
+any(cooks>1)
+##No Cook's D values > 1, no outliers assumption satisfied
