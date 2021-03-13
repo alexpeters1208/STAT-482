@@ -90,3 +90,43 @@ ggplot(data, aes(x = Win...vs.Rank, fill = Conference)) + geom_histogram(binwidt
   ggtitle("Histogram of Win % vs. Ranked Opponents")
 ggplot(data, aes(x = Avg.Point.Differential, fill = Conference)) + geom_histogram(binwidth = 5) +
   ggtitle("Histogram of Average Point Differential")
+
+
+
+
+
+
+
+
+
+
+
+############ Correlation plots #############
+
+# fbs independent
+corrplot(cor(data[data$Conference=="FBS Independent",! names(data) %in% c("Team","Conference","Year")],
+             method="spearman"), type='lower', tl.cex=.5, tl.srt=45, tl.col="black")
+title(main="Correlation within FBS Independent", adj=1)
+
+# all but fbs independent
+corrplot(cor(transform(data,Conference = as.numeric(Conference))[data$Conference!="FBS Independent",! names(data) %in% c("Team","Year")],
+             method="spearman"), type='lower', tl.cex=.5, tl.srt=45, tl.col="black")
+title(main="Correlation without FBS Independent", adj=1)
+
+# include fbs independent
+corrplot(cor(transform(data,Conference = as.numeric(Conference))[,! names(data) %in% c("Team","Year")],
+             method="spearman"), type='lower', tl.cex=.5, tl.srt=45, tl.col="black")
+title(main="Correlation with FBS Independent", adj=1)
+
+
+removed = c("Team", "Year", "X3rdDownConvPct", "X3rdDownConvPctDef", "OppFDPerGame",
+            "RushYdsPerRushDef", "RushYdsPerGameDef", "PPGDef", "PPG", "YdsPerGame",
+            "YdsPerGameDef", "PassYdsPerAtt", "PassYdsPerAttDef", "RushYdsPerRush",
+            "Avg.Point.Differential", "PenPerGame", "OppRZScorePct", "RZScorePct",
+            "SacksAllowed", "Sacks")
+
+test <- data[,! names(data) %in% removed]
+
+corrplot(cor(transform(test,Conference = as.numeric(Conference)),
+             method="spearman"), type='lower', tl.cex=.5, tl.srt=45, tl.col="black")
+title(main="Correlation after Removing Variables", adj=1)
