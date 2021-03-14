@@ -6,9 +6,7 @@ data = read.csv("football.csv")
 data$Conference = as.factor(data$Conference)
 data$Year = as.factor(data$Year)
 
-print("This should be in Alex's branch")
-print("Cameron was present")
-
+# More histograms
 # Explorartory Histograms
 ggplot(data, aes(x = Games, fill = Year)) + geom_histogram(binwidth = 1) + 
   ggtitle("Histogram of Games Played")
@@ -86,37 +84,29 @@ ggplot(data, aes(x = AvgTurnoverMargin, fill = Conference)) + geom_histogram(bin
   ggtitle("Histogram of Average Turnover Margin")
 ggplot(data, aes(x = WinPct, fill = Conference)) + geom_histogram(binwidth = .1) +
   ggtitle("Histogram of Win %")
-ggplot(data, aes(x = Win...vs.Rank, fill = Conference)) + geom_histogram(binwidth = .15) +
+ggplot(data, aes(x = Win...vs.Rank, fill = Conference)) + geom_histogram(binwidth = .1) +
   ggtitle("Histogram of Win % vs. Ranked Opponents")
 ggplot(data, aes(x = Avg.Point.Differential, fill = Conference)) + geom_histogram(binwidth = 5) +
   ggtitle("Histogram of Average Point Differential")
 
-
-
-
-
-
-
-
-
-
+data = data[data$Year != 2020,]
 
 ############ Correlation plots #############
 
 # fbs independent
 corrplot(cor(data[data$Conference=="FBS Independent",! names(data) %in% c("Team","Conference","Year")],
              method="spearman"), type='lower', tl.cex=.5, tl.srt=45, tl.col="black")
-title(main="Correlation within FBS Independent", adj=1)
+title(main="Correlation for Notre Dame", adj=1)
 
 # all but fbs independent
 corrplot(cor(transform(data,Conference = as.numeric(Conference))[data$Conference!="FBS Independent",! names(data) %in% c("Team","Year")],
              method="spearman"), type='lower', tl.cex=.5, tl.srt=45, tl.col="black")
-title(main="Correlation without FBS Independent", adj=1)
+title(main="Correlation without Notre Dame", adj=1)
 
 # include fbs independent
 corrplot(cor(transform(data,Conference = as.numeric(Conference))[,! names(data) %in% c("Team","Year")],
              method="spearman"), type='lower', tl.cex=.5, tl.srt=45, tl.col="black")
-title(main="Correlation with FBS Independent", adj=1)
+title(main="Overall Correlation", adj=1)
 
 
 removed = c("Team", "Year", "X3rdDownConvPct", "X3rdDownConvPctDef", "OppFDPerGame",
@@ -125,8 +115,9 @@ removed = c("Team", "Year", "X3rdDownConvPct", "X3rdDownConvPctDef", "OppFDPerGa
             "Avg.Point.Differential", "PenPerGame", "OppRZScorePct", "RZScorePct",
             "SacksAllowed", "Sacks")
 
-test <- data[,! names(data) %in% removed]
+newdata = data[,! names(data) %in% removed]
 
-corrplot(cor(transform(test,Conference = as.numeric(Conference)),
+corrplot(cor(transform(newdata,Conference = as.numeric(Conference)),
              method="spearman"), type='lower', tl.cex=.5, tl.srt=45, tl.col="black")
-title(main="Correlation after Removing Variables", adj=1)
+title(main="Overall Correlation", adj=1)
+
