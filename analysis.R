@@ -6,7 +6,6 @@ data = read.csv("football.csv")
 data$Conference = as.factor(data$Conference)
 data$Year = as.factor(data$Year)
 
-# More histograms
 # Explorartory Histograms
 ggplot(data, aes(x = Games, fill = Year)) + geom_histogram(binwidth = 1) + 
   ggtitle("Histogram of Games Played")
