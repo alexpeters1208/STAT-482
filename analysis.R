@@ -1,5 +1,9 @@
 #loading in libraries
 library(ggplot2)
+library(corrplot)
+library(car)
+library(MASS)
+library(arm)
 
 #loading in data
 data = read.csv("football.csv")
@@ -108,16 +112,38 @@ corrplot(cor(transform(data,Conference = as.numeric(Conference))[,! names(data) 
              method="spearman"), type='lower', tl.cex=.5, tl.srt=45, tl.col="black")
 title(main="Overall Correlation", adj=1)
 
+################## removing multicollinearity ##################
 
-removed = c("Team", "Year", "X3rdDownConvPct", "X3rdDownConvPctDef", "OppFDPerGame",
-            "RushYdsPerRushDef", "RushYdsPerGameDef", "PPGDef", "PPG", "YdsPerGame",
-            "YdsPerGameDef", "PassYdsPerAtt", "PassYdsPerAttDef", "RushYdsPerRush",
-            "Avg.Point.Differential", "PenPerGame", "OppRZScorePct", "RZScorePct",
-            "SacksAllowed", "Sacks")
+red.data = data[, ! names(data) %in% c("Team","Games","Year","Avg.Point.Differential")]
+red.data$Conf.Champ = abs(red.data$Conf.Champ)
 
-newdata = data[,! names(data) %in% removed]
+model = glm(Selected ~., data=red.data, family="binomial")
+ld.vars = attributes(alias(model)$Complete)$dimnames[[1]]
+vifs = vif(model)
 
-corrplot(cor(transform(newdata,Conference = as.numeric(Conference)),
-             method="spearman"), type='lower', tl.cex=.5, tl.srt=45, tl.col="black")
-title(main="Overall Correlation", adj=1)
+test = vifs[,3]
+sort(test, decreasing=TRUE)[1]
+
+curr_vif = as.numeric(sort(test, decreasing=TRUE)[1])
+curr_name = names(sort(test, decreasing=TRUE)[1])
+while (curr_vif > 5) {
+  red.data = red.data[, ! names(red.data) %in% curr_name]
+  newmodel = glm(Selected ~., data=red.data, family="binomial")
+  newvif = vif(newmodel)
+  curr_vif = as.numeric(sort(newvif[,3], decreasing=TRUE)[1])
+  curr_name = names(sort(newvif[,3], decreasing=TRUE)[1])
+}
+
+red.model = glm(Selected ~., data=red.data, family="binomial")
+summary(red.model)
+
+########## with bayes glm ############
+
+model2 = bayesglm(Selected ~., data=red.data, family="binomial")
+summary(red.model)
+
+red.model2 = stepAIC(model2, trace=FALSE, direction="backward")
+summary(red.model2)
+
+red.data2 = red.data[,names(red.data) %in% names(red.model2$coefficients)[-1]]
 
