@@ -1,5 +1,8 @@
 #loading in libraries
 library(ggplot2)
+library(MASS)
+library(corrplot)
+library(arm)
 
 #loading in data
 data = read.csv("football.csv")
@@ -41,10 +44,16 @@ removed = c("Team", "Year", "X3rdDownConvPct", "X3rdDownConvPctDef", "OppFDPerGa
             "RushYdsPerRushDef", "RushYdsPerGameDef", "PPGDef", "PPG", "YdsPerGame",
             "YdsPerGameDef", "PassYdsPerAtt", "PassYdsPerAttDef", "RushYdsPerRush",
             "Avg.Point.Differential", "PenPerGame", "OppRZScorePct", "RZScorePct",
-            "SacksAllowed", "Sacks")
+            "SacksAllowed", "Sacks", "WinPct")
+
+removed = c("Team", "Year", "Avg.Point.Differential", "Games")
 
 newdata = data[,! names(data) %in% removed]
 
 corrplot(cor(transform(newdata,Conference = as.numeric(Conference)),
              method="spearman"), type='lower', tl.cex=.5, tl.srt=45, tl.col="black")
 title(main="Overall Correlation", adj=1)
+
+newmodel = bayesglm(Selected ~ ., data=newdata, family=binomial)
+newfit = stepAIC(newmodel, trace=FALSE, direction="backward")
+summary(newfit)
