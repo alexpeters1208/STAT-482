@@ -84,11 +84,11 @@ xgb.test <- xgb.DMatrix(data = test.data, label = test.label)
 # Training the model
 xgb_params <- list(
   booster = "gbtree", 
-  objective = "binary:logistic",
-  max_depth = 5,
-  eta = 0.3,
-  gamma = 3,
-  min_child_weight = 20
+  objective = "binary:logistic"
+  # max_depth = 5,
+  # eta = 0.3,
+  # gamma = 3,
+  # min_child_weight = 20
 )
 
 ### Fitting the Model
