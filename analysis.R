@@ -3,6 +3,8 @@ library(ggplot2)
 library(MASS)
 library(corrplot)
 library(arm)
+library(xgboost)
+library(Matrix)
 
 #loading in data
 data = read.csv("football.csv")
@@ -40,11 +42,11 @@ corrplot(cor(transform(data,Conference = as.numeric(Conference))[,! names(data) 
 title(main="Overall Correlation", adj=1)
 
 
-removed = c("Team", "Year", "X3rdDownConvPct", "X3rdDownConvPctDef", "OppFDPerGame",
-            "RushYdsPerRushDef", "RushYdsPerGameDef", "PPGDef", "PPG", "YdsPerGame",
-            "YdsPerGameDef", "PassYdsPerAtt", "PassYdsPerAttDef", "RushYdsPerRush",
-            "Avg.Point.Differential", "PenPerGame", "OppRZScorePct", "RZScorePct",
-            "SacksAllowed", "Sacks", "WinPct")
+# removed = c("Team", "Year", "X3rdDownConvPct", "X3rdDownConvPctDef", "OppFDPerGame",
+#            "RushYdsPerRushDef", "RushYdsPerGameDef", "PPGDef", "PPG", "YdsPerGame",
+#            "YdsPerGameDef", "PassYdsPerAtt", "PassYdsPerAttDef", "RushYdsPerRush",
+#            "Avg.Point.Differential", "PenPerGame", "OppRZScorePct", "RZScorePct",
+#            "SacksAllowed", "Sacks", "WinPct")
 
 removed = c("Team", "Year", "Avg.Point.Differential", "Games")
 
@@ -57,3 +59,51 @@ title(main="Overall Correlation", adj=1)
 newmodel = bayesglm(Selected ~ ., data=newdata, family=binomial)
 newfit = stepAIC(newmodel, trace=FALSE, direction="backward")
 summary(newfit)
+
+
+#xgboost
+set.seed(23)
+label <- newdata$Selected #response variable
+n <- nrow(data) #number of rows of train
+train.index <- sample(n, floor(0.8 * n)) #80/20 dataset spli
+
+#converting conference to numbers for xgboost
+newdata$Conference <- as.numeric(factor(newdata$Conference)) 
+
+#splitting data into train and test and indicating response for evaluation
+train.data <- as.matrix(newdata[train.index,])
+train.label <- label[train.index]
+test.data <- as.matrix(newdata[-train.index,])
+test.label <- label[-train.index]
+
+### xgb.DMatrix
+#converting into xgb matrix for training
+xgb.train <- xgb.DMatrix(data = train.data, label = train.label)
+xgb.test <- xgb.DMatrix(data = test.data, label = test.label)
+
+# Training the model
+xgb_params <- list(
+  booster = "gbtree", 
+  objective = "binary:logistic",
+  max_depth = 5,
+  eta = 0.3,
+  gamma = 3,
+  min_child_weight = 20
+)
+
+### Fitting the Model
+#fitting model
+xgb.fit <- xgb.train(
+  params = xgb_params,
+  data = xgb.train,
+  nrounds = 100)
+
+# Prediction
+xgb.pred <- predict(xgb.fit, test.data, reshape = T) #predicting on set aside train data
+xgb.pred <- as.data.frame(xgb.pred)
+colnames(xgb.pred) = levels(label)
+head(xgb.pred) #model predictions on set aside test data
+
+#Analyzing the Model
+sum(abs(test.label - xgb.pred[,]))/length(test.label)
+plot(xgb.pred[,],test.label, xlab = "Model Prediction", ylab = "Selected")   
