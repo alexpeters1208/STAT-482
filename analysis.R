@@ -48,22 +48,13 @@ title(main="Overall Correlation", adj=1)
 #            "Avg.Point.Differential", "PenPerGame", "OppRZScorePct", "RZScorePct",
 #            "SacksAllowed", "Sacks", "WinPct")
 
-removed = c("Team", "Year", "Avg.Point.Differential", "Games")
-
+# Separating Response and Excluding Team and Year
+label <- data$Selected #response variable
+removed = c("Team", "Year", "Games", "Selected")
 newdata = data[,! names(data) %in% removed]
-
-corrplot(cor(transform(newdata,Conference = as.numeric(Conference)),
-             method="spearman"), type='lower', tl.cex=.5, tl.srt=45, tl.col="black")
-title(main="Overall Correlation", adj=1)
-
-newmodel = bayesglm(Selected ~ ., data=newdata, family=binomial)
-newfit = stepAIC(newmodel, trace=FALSE, direction="backward")
-summary(newfit)
 
 
 #xgboost
-set.seed(23)
-label <- newdata$Selected #response variable
 n <- nrow(data) #number of rows of train
 train.index <- sample(n, floor(0.8 * n)) #80/20 dataset spli
 
@@ -107,3 +98,5 @@ head(xgb.pred) #model predictions on set aside test data
 #Analyzing the Model
 sum(abs(test.label - xgb.pred[,]))/length(test.label)
 plot(xgb.pred[,],test.label, xlab = "Model Prediction", ylab = "Selected")   
+
+xgb.importance(model=xgb.fit) #Most important features
