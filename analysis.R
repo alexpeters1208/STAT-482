@@ -1,3 +1,5 @@
+############### Loading in Libraries and Data ######################
+
 #loading in libraries
 library(ggplot2)
 library(MASS)
@@ -31,7 +33,7 @@ data = data[data$Year != 2020,] #removing 2020 data
 # title(main="Correlation for Notre Dame", adj=1)
 
 # # all but fbs independent
-# corrplot(cor(transform(data,Conference = as.numeric(Conference))[data$Conference!="FBS Independent",! names(data) %in% c("Team","Year")],
+#corrplot(cor(transform(data, Conference = as.numeric(Conference))[data$Conference!="FBS Independent", ! names(data) %in% c("Team","Year")],
 #              method="spearman"), type='lower', tl.cex=.5, tl.srt=45, tl.col="black")
 # title(main="Correlation without Notre Dame", adj=1)
 
@@ -47,7 +49,7 @@ data = data[data$Year != 2020,] #removing 2020 data
 #            "Avg.Point.Differential", "PenPerGame", "OppRZScorePct", "RZScorePct",
 #            "SacksAllowed", "Sacks", "WinPct")
 
-###################### xgboost Model #########################
+###################### xgboost Model Setup #########################
 
 n <- nrow(data) #number of rows of train
 train.index <- sample(n, floor(0.75 * n)) #75/25 dataset split
@@ -72,10 +74,12 @@ test.label <- label[-train.index]
 xgb.train <- xgb.DMatrix(data = train.data, label = train.label)
 xgb.test <- xgb.DMatrix(data = test.data, label = test.label)
 
+###################### xgboost Cross Validation ##########################
 
 ### Running Cross Validation to Find Best Set of Parameters
 #running a cross validation to determine best set of parameters, note that I have run this
-#multiple times with many more potential parameter combinations and only selected ideal #parameters for time reasons during this run
+#multiple times with many more potential parameter combinations and 
+#only selected ideal #parameters for time reasons during this run
 # potential_param <- data.frame(
 #   depth = numeric(),
 #   eta = numeric(),
@@ -117,6 +121,8 @@ xgb.test <- xgb.DMatrix(data = test.data, label = test.label)
 #                 early.stop.round = 1000, 
 #                 maximize = F)
 
+####################### xgboost Model ################################
+
 
 # Training the model
 ### Parameters
@@ -139,13 +145,13 @@ xgb.fit <- xgb.train(
   data = xgb.train,
   nrounds = 40000)
 
-#################### Prediction ###################
+#################### xgboost Prediction and Analysis ###################
 xgb.pred <- predict(xgb.fit, test.data, reshape = T) #predicting on set aside train data
 xgb.pred <- as.data.frame(xgb.pred)
 colnames(xgb.pred) = levels(label)
 head(xgb.pred) #model predictions on set aside test data
 
-################# Analyzing the Model ####################
+# Model Accuracy
 sum(abs(test.label - xgb.pred[,]))/length(test.label)
 plot(xgb.pred[,],test.label, xlab = "Model Prediction", ylab = "Selected")   
 
