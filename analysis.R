@@ -110,15 +110,15 @@ xgb.test <- xgb.DMatrix(data = test.data, label = test.label)
 #   }
 # }
 
-#Picking best nrounds
-# xgbcv <- xgb.cv(params = xgb_params, 
-#                 data = xgb.train, 
-#                 nrounds = 10000, 
-#                 nfold = 3, 
-#                 showsd = T, 
-#                 stratified = T, 
-#                 print.every.n = 1000, 
-#                 early.stop.round = 1000, 
+# Picking best nrounds
+# xgbcv <- xgb.cv(params = xgb_params,
+#                 data = xgb.train,
+#                 nrounds = 10000,
+#                 nfold = 3,
+#                 showsd = T,
+#                 stratified = T,
+#                 print.every.n = 1000,
+#                 early.stop.round = 1000,
 #                 maximize = F)
 
 ####################### xgboost Model ################################
@@ -126,8 +126,6 @@ xgb.test <- xgb.DMatrix(data = test.data, label = test.label)
 
 # Training the model
 ### Parameters
-#6, .1, 0, 0; .9957217
-#5, .1, 3, 0; .9975697
 #5, .05, 0, 1; .9956913
 xgb_params <- list(
   booster = "gbtree", 
@@ -143,16 +141,63 @@ xgb_params <- list(
 xgb.fit <- xgb.train(
   params = xgb_params,
   data = xgb.train,
-  nrounds = 40000)
+  nrounds = 1500)
 
 #################### xgboost Prediction and Analysis ###################
 xgb.pred <- predict(xgb.fit, test.data, reshape = T) #predicting on set aside train data
 xgb.pred <- as.data.frame(xgb.pred)
 colnames(xgb.pred) = levels(label)
 head(xgb.pred) #model predictions on set aside test data
+pred_real <- cbind(xgb.pred, test.label) #comparing prediction to test label
+head(pred_real)
 
 # Model Accuracy
 sum(abs(test.label - xgb.pred[,]))/length(test.label)
 plot(xgb.pred[,],test.label, xlab = "Model Prediction", ylab = "Selected")   
 
-xgb.importance(model=xgb.fit) #Most important features
+importance = xgb.importance(model=xgb.fit) #Most important features
+importance
+
+################ Accuracy of Predictions > .5 ########################
+err_vec = c()
+good = 0
+bad = 0
+
+for (i in 1:100) {
+  train.index <- sample(n, floor(0.75 * n)) #75/25 dataset split
+  train.data <- as.matrix(newdata[train.index,])
+  train.label <- label[train.index]
+  test.data <- as.matrix(newdata[-train.index,])
+  test.label <- label[-train.index]
+  
+  ### xgb.DMatrix
+  #converting into xgb matrix for training
+  xgb.train <- xgb.DMatrix(data = train.data, label = train.label)
+  xgb.test <- xgb.DMatrix(data = test.data, label = test.label)
+  
+  ### Fitting the Model
+  #fitting model
+  xgb.fit <- xgb.train(
+    params = xgb_params,
+    data = xgb.train,
+    nrounds = 1500)
+  
+  xgb.pred <- predict(xgb.fit, test.data, reshape = T) #predicting on set aside train data
+  xgb.pred <- as.data.frame(xgb.pred)
+  pred_real <- cbind(xgb.pred, test.label)
+
+  pred_real$xgb.pred = as.numeric(pred_real$xgb.pred > .5)
+  confusion <- table(pred_real)
+  error = confusion[4]/(confusion[3] + confusion[4])
+  err_vec = c(err_vec, error)
+  
+  good = good + confusion[4]
+  bad = bad + confusion[3]
+}
+
+good/(good + bad) #TPR after 100 simulations
+
+hist(err_vec, 
+     main = "True Positive Rates in xgboost Model (n=100)", 
+     xlab = "True Positive Rate",
+     breaks = 4)
