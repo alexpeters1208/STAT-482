@@ -159,9 +159,11 @@ importance = xgb.importance(model=xgb.fit) #Most important features
 importance
 
 ################ Accuracy of Predictions > .5 ########################
-err_vec = c()
-good = 0
-bad = 0
+cutoff = seq(.05,.95,.05)
+good = rep(0,19)
+bad = rep(0,19)
+notasbad = rep(0,19)
+notasgood = rep(0,19)
 
 for (i in 1:100) {
   train.index <- sample(n, floor(0.75 * n)) #75/25 dataset split
@@ -182,22 +184,32 @@ for (i in 1:100) {
     data = xgb.train,
     nrounds = 1500)
   
-  xgb.pred <- predict(xgb.fit, test.data, reshape = T) #predicting on set aside train data
-  xgb.pred <- as.data.frame(xgb.pred)
-  pred_real <- cbind(xgb.pred, test.label)
-
-  pred_real$xgb.pred = as.numeric(pred_real$xgb.pred > .5)
-  confusion <- table(pred_real)
-  error = confusion[4]/(confusion[3] + confusion[4])
-  err_vec = c(err_vec, error)
+  for (j in cutoff) {
+    xgb.pred <- predict(xgb.fit, test.data, reshape = T) #predicting on set aside train data
+    xgb.pred <- as.data.frame(xgb.pred)
+    pred_real <- cbind(xgb.pred, test.label)
+    
+    #err_vec = c()
+    pred_real$xgb.pred = as.numeric(pred_real$xgb.pred > j)
+    
+    confusion <- table(pred_real)
+    #error = confusion[4]/(confusion[3] + confusion[4])
+    #err_vec = c(err_vec, error)
   
-  good = good + confusion[4]
-  bad = bad + confusion[3]
+    good[j*20] = good[j*20] + confusion[4]
+    bad[j*20] = bad[j*20] + confusion[3]
+    notasbad[j*20] = notasbad[j*20] + confusion[2]
+    notasgood[j*20] = notasgood[j*20] + confusion[1]
+  }
 }
 
-good/(good + bad) #TPR after 100 simulations
+TPR = good/(good + bad) #TPR after i simulations
+FPR = notasbad/(notasbad + notasgood) #FPR after i simulations
+plot(cutoff,TPR,xlab="cutoff",ylab="TPR",type="b")
+plot(cutoff,FPR,xlab="cutoff",ylab="FPR",type="b")
+matplot(cutoff,cbind(TPR,FPR),pch=1,type="b",xlab="cutoff",ylab="FPR             TPR")
 
-hist(err_vec, 
-     main = "True Positive Rates in xgboost Model (n=100)", 
-     xlab = "True Positive Rate",
-     breaks = 4)
+#hist(err_vec, 
+     #main = "True Positive Rates in xgboost Model (n=100)", 
+     #xlab = "True Positive Rate",
+     #breaks = 4)
