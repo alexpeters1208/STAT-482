@@ -54,25 +54,26 @@ corrplot(cor(transform(newdata,Conference = as.numeric(Conference)),
              method="spearman"), type='lower', tl.cex=.5, tl.srt=45, tl.col="black")
 title(main="Overall Correlation", adj=1)
 
+trainIndex <- createDataPartition(newdata$Selected, p = 5/6,
+                                  list = FALSE,
+                                  times = 1)
+train_data <- newdata[ trainIndex,]
+test_data <- newdata[-trainIndex,]
+
+control <- trainControl(method="repeatedcv", number=10, repeats=3, search="random")
+mtry <- sqrt(ncol(train_data))
+rf_random <- train(Selected~., data=train_data, method="rf", metric="Accuracy", tuneLength=15, trControl=control)
+
 successful_years<-0
 all_but_four<-0
-r<-100
+r<-1000
 for (k in 1:r) {
   new_vec<-matrix(ncol=3)
-  #set.seed(k^3)
   trainIndex <- createDataPartition(newdata$Selected, p = 5/6,
                                     list = FALSE,
                                     times = 1)
   train_data <- newdata[ trainIndex,]
   test_data <- newdata[-trainIndex,]
-  #train_data<-newdata[c(1:260,326:390),]
-  #test_data<-newdata[261:325,]
-  
-  control <- trainControl(method="repeatedcv", number=10, repeats=3, search="random")
-  mtry <- sqrt(ncol(train_data))
-  rf_random <- train(Selected~., data=train_data, method="rf", metric="Accuracy", tuneLength=15, trControl=control)
-  #print(rf_random)
-  #plot(rf_random)
   
   rf_probs<-predict(rf_random, newdata = test_data, type = "prob")
   for (i in 1:65) {
@@ -106,5 +107,23 @@ for (k in 1:r) {
   paste("\n")
   paste("\n")
 }
-correct_pct<-(successful_years+all_but_four)/r
+#correct_pct<-(successful_years+all_but_four)/r
+correct_pct<-successful_years/r
 correct_pct
+importance<-varImp(rf_random)
+plot(importance)
+
+cpt<-c(0.972,0.971,0.965,0.976,0.971,0.972,0.971,0.961,0.967,0.976)
+#tpr<-c()
+#for (i in 1:10) {
+#  trainIndex2 <- createDataPartition(newdata$Selected, p = 0.75,
+#                                     list = FALSE,
+#                                     times = 1)
+#  train_data2 <- newdata[trainIndex2,]
+#  test_data2 <- newdata[-trainIndex2,]
+#  rf_probs2 <- predict(rf_random, newdata=test_data2,type="prob")
+#  cutoff<- rf_probs2[rf_probs2[,2]>=0.1,]
+#  name<-as.numeric(row.names(cutoff)) - 65
+#  tpr[i] <- nrow(cutoff) / nrow(train_data2[train_data2$Selected == 1,])
+#}
+#tpr
