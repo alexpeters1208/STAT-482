@@ -144,7 +144,7 @@ xgb.fit <- xgb.train(
   nrounds = 1500)
 
 #################### xgboost Prediction and Analysis ###################
-xgb.pred <- predict(xgb.fit, test.data, reshape = T) #predicting on set aside train data
+xgb.pred <- predict(xgb.fit, test.data, reshape = T) #predicting on set aside test data
 xgb.pred <- as.data.frame(xgb.pred)
 colnames(xgb.pred) = levels(label)
 head(xgb.pred) #model predictions on set aside test data
@@ -200,4 +200,4 @@ good/(good + bad) #TPR after 100 simulations
 hist(err_vec, 
      main = "True Positive Rates in xgboost Model (n=100)", 
      xlab = "True Positive Rate",
-     breaks = 4)
+     breaks = 5)
